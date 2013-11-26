@@ -1,0 +1,2 @@
+Dec.13
+The previous versions use UDP packets to intriguer the link formation process. Now I use a signal to do so.
