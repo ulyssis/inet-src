@@ -22,7 +22,7 @@ BERGER::posTable_t BERGER::posTable;
 Coord srcPos;
 Coord dstPos;
 IPv4Address srcAddr, dstAddr;
-double lambda=1.0e-5;
+double lambda=1.0e-2;
 double transmitterPower=6e-4;
 double thermalNoise=-110; //-110dbm, conversion to w is done in function calculateLocalLinkQuality()
 double pathLossAlpha=2;
@@ -503,7 +503,9 @@ BERGER::pair_t BERGER::calculateLocalLinkQuality(const BergerNodeInfo& src, cons
         //TODO: calculate on hop link a-self
         double snr = transmitterPower * pow(aC.distance(selfC), (-pathLossAlpha))/pow(thermalNoise,2);
         delay = messageLength / (bandwidth* log2(1+snr));
-        r= delay - lambda;
+        double wayToGo = (self.ip == src.ip)?aC.distance(dstC):aC.distance(srcC);//distance to dst
+        r= delay*wayToGo;
+        r-= lambda;
         std::cout << "BERGER: Node " << myAddr.getDByte(3) << "'s utility= " << r << endl;
         twoValues.first = delay;
         twoValues.second = r;
@@ -527,6 +529,11 @@ BERGER::pair_t BERGER::calculateLocalLinkQuality(const BergerNodeInfo& src, cons
         double snr1 = transmitterPower * pow(aC.distance(selfC), (-pathLossAlpha))/pow(thermalNoise,2);
         double snr2 = transmitterPower * pow(bC.distance(selfC), (-pathLossAlpha))/pow(thermalNoise,2);
         delay = messageLength / (bandwidth* log2((1+snr1)*(1+snr2)));
+
+        double wayToGo = aC.distance(srcC);
+        double wayGone = bC.distance(dstC);
+
+        r = delay*(wayToGo + wayGone);
 
         if(a.gw2 == self.gw1)
             {
