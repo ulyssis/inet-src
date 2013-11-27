@@ -21,6 +21,7 @@ Define_Module(BERGER);
 BERGER::posTable_t BERGER::posTable;
 Coord srcPos;
 Coord dstPos;
+IPv4Address srcAddr, dstAddr;
 double lambda=1.0e-5;
 double transmitterPower=6e-4;
 double thermalNoise=-110; //-110dbm, conversion to w is done in function calculateLocalLinkQuality()
@@ -49,18 +50,15 @@ void BERGER::initialize(int stage)
 		myAddr=routingTable->getRouterId();
 		// Broadcast position information to neighbors:
 
-//        BergerNeighborInfo* bni=new BergerNeighborInfo();
-//        bni->setRouterAddress(myAddr);
-//        bni->setRouterXPos(getXPos());
-//        bni->setRouterYPos(getYPos());
-//        bni->setGw1(IPv4Address::UNSPECIFIED_ADDRESS);
-//        bni->setGw2(IPv4Address::UNSPECIFIED_ADDRESS);
-//        doLocalBroadcast(bni);
+        BergerNeighborInfo* bni=new BergerNeighborInfo();
+        bni->setRouterAddress(myAddr);
+        bni->setRouterXPos(getXPos());
+        bni->setRouterYPos(getYPos());
+        bni->setGw1(IPv4Address::UNSPECIFIED_ADDRESS);
+        bni->setGw2(IPv4Address::UNSPECIFIED_ADDRESS);
+        doLocalBroadcast(bni);
         cMessage *localBroadcastBni = new cMessage("localBroadcastBni");
-        scheduleAt(simTime(), localBroadcastBni);
-
-
-// doLocalBroadcast every 2 seconds before 10s.
+        scheduleAt(0.1, localBroadcastBni);
 
 
 		/*
@@ -68,13 +66,14 @@ void BERGER::initialize(int stage)
 		 */
 #ifdef use_rreqMsg
         IRoutingTable* srcRoutingTable=check_and_cast<IRoutingTable*>(getParentModule()->getParentModule()->getModuleByRelativePath("fixhost[40]")->getSubmodule("routingTable"));
-        IPv4Address srcAddr = srcRoutingTable->getRouterId();
+        srcAddr = srcRoutingTable->getRouterId();
         srcPos.x =posTable[srcAddr].x;
         srcPos.y = posTable[srcAddr].y;
+        double test = srcPos.x;
 
 
         IRoutingTable* dstRoutingTable=check_and_cast<IRoutingTable*>(getParentModule()->getParentModule()->getModuleByRelativePath("fixhost[12]")->getSubmodule("routingTable"));
-        IPv4Address dstAddr = dstRoutingTable->getRouterId();
+        dstAddr = dstRoutingTable->getRouterId();
         dstPos.x =posTable[dstAddr].x;
         dstPos.y = posTable[dstAddr].y;
 
@@ -223,6 +222,10 @@ void BERGER::handleMessage(cMessage *msg)
 	 */
 	if(BergerRouteRequest* rreq=dynamic_cast<BergerRouteRequest*>(msg))
 	{
+	    if(myAddr.getDByte(3)==15)
+	        {
+	        int stop2 =1;
+	        }
 	    if (!sdPairs.size())
 	    {
 	        if(msg->isSelfMessage())
@@ -265,7 +268,7 @@ void BERGER::handleMessage(cMessage *msg)
 
 	if ( msg->isSelfMessage() && (!strcmp(msg->getName(), "localBroadcastBni")) && simTime() < 10)
 	    {
-        std::cout << "BERGER: My (" << myAddr << ") position: (" << getXPos() << "," << getYPos() << ") at "<<simTime() << endl;
+        std::cout << "BERGER: Node (" << myAddr.getDByte(3) << ")' position: (" << getXPos() << "," << getYPos() << "), broadcasting localBroadcastBni at "<<simTime() << endl;
         BergerNeighborInfo* bni=new BergerNeighborInfo();
         bni->setRouterAddress(myAddr);
         bni->setRouterXPos(getXPos());
@@ -343,7 +346,7 @@ void BERGER::updateLocalLinks(BergerNeighborInfo* bni)
                     double newQuality=pair.first;
                     if(newQuality < oldQuality)
                     {
-                        std::cout << "BERGER: Updating local link: " << sdPairsIt->first.src << "<->" << gw1 << "<->" << myAddr << "<->" << bni->getRouterAddress().getDByte(3) << "<->" << sdPairsIt->first.dst << endl;
+                        std::cout << "BERGER: First phase updating local link: " << sdPairsIt->first.src << "<->" << gw1 << "<->" << myAddr << "<->" << bni->getRouterAddress().getDByte(3) << "<->" << sdPairsIt->first.dst << endl;
                         updateRoute(sdPairsIt->first.src, bni->getRouterAddress(), gw2, sdPairsIt->first.dst, newQuality);
                         oldQuality = newQuality;
                         state = pair;
@@ -368,7 +371,7 @@ void BERGER::updateLocalLinks(const BergerNodeInfo& src, const BergerNodeInfo& d
 	{
 		oldQuality=llIt->second.quality;
 	}
-	if(myAddr.getDByte(3)==41)
+	if(myAddr.getDByte(3)==6)
 	{
 	    int stop =1;
 	    std::cout << "location: (" << getXPos() << "," << getYPos() << "), " << "(" << src.x << "," << src.y << ")\n";
@@ -412,7 +415,7 @@ void BERGER::updateLocalLinks(const BergerNodeInfo& src, const BergerNodeInfo& d
 
             if(newQuality < oldQuality)
             {
-                std::cout << "BERGER: Updating local link: " << src.ip << "<->" << It->second->getRouterAddress() << "<->" << myAddr << "<->" << It->second->getRouterAddress() << "<->" << dst.ip << endl;
+                std::cout << "BERGER: First phase updating local link: " << src.ip << "<->" << It->second->getRouterAddress() << "<->" << myAddr << "<->" << It->second->getRouterAddress() << "<->" << dst.ip << endl;
 
                 // in this case, the parent and child node is the same
                 updateRoute(src.ip,It->second->getRouterAddress(),It->second->getRouterAddress(),dst.ip,newQuality);
@@ -481,7 +484,7 @@ void BERGER::updateLocalLinks(const BergerNodeInfo& src, const BergerNodeInfo& d
 
 BERGER::pair_t BERGER::calculateLocalLinkQuality(const BergerNodeInfo& src, const BergerNodeInfo& a, const BergerNodeInfo& self, const BergerNodeInfo& b, const BergerNodeInfo& dst) const
 {
-    std::cout << "BERGER: Calculating quality for local link " << src << "<->" << a << "<->" << self << "<->" << b << "<->" << dst << endl;
+    std::cout << "BERGER: Calculating quality for local link " << src.ip.getDByte(3) << "<->" << a.ip.getDByte(3) << "<->" << self.ip.getDByte(3) << "<->" << b.ip.getDByte(3) << "<->" << dst.ip.getDByte(3) << endl;
     Coord srcC(src.x,src.y);
     Coord aC(a.x,a.y);
     Coord selfC(self.x,self.y);
@@ -515,8 +518,8 @@ BERGER::pair_t BERGER::calculateLocalLinkQuality(const BergerNodeInfo& src, cons
         int bandwidth;
         */
         /*
-         * calculate 1/r:
-         * r is service rate, 1/r is the average transmission time on the link, which is the metric denoting the link quality
+         * calculate delay: 1/r
+         * r is service rate, 1/r is the average transmission time on the link (delay), which is the metric denoting the link quality
          *  r = C/B = (W*log2(1+v_{k,k+1}))/B
          *  C is capacity, C is measured in bits per second if the logarithm is taken in base 2, B is packet size (messageLength)
          *  W is bandwidth
