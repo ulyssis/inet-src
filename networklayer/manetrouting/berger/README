@@ -1,2 +1,6 @@
 Dec.13
 The previous versions use UDP packets to intriguer the link formation process. Now I use a signal to do so.
+
+Nov.29
+every section in handelmsg() should be ended with "return", otherwise the following section will break down.
+

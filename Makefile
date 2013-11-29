@@ -584,6 +584,7 @@ OBJS = \
     $O/networklayer/manetrouting/base/MeshControlInfo_m.o \
     $O/networklayer/manetrouting/batman/BatmanMsg_m.o \
     $O/networklayer/manetrouting/berger/BergerNeighborInfo_m.o \
+    $O/networklayer/manetrouting/berger/BergerTestPkt_m.o \
     $O/networklayer/manetrouting/berger/BergerRouteRequest_m.o \
     $O/networklayer/manetrouting/dsdv/DSDVhello_m.o \
     $O/networklayer/manetrouting/dymo_fau/DYMO_UERR_m.o \
@@ -676,6 +677,7 @@ MSGFILES = \
     networklayer/manetrouting/base/MeshControlInfo.msg \
     networklayer/manetrouting/batman/BatmanMsg.msg \
     networklayer/manetrouting/berger/BergerNeighborInfo.msg \
+    networklayer/manetrouting/berger/BergerTestPkt.msg \
     networklayer/manetrouting/berger/BergerRouteRequest.msg \
     networklayer/manetrouting/dsdv/DSDVhello.msg \
     networklayer/manetrouting/dymo_fau/DYMO_UERR.msg \
@@ -4480,6 +4482,12 @@ $O/networklayer/manetrouting/berger/BergerRouteRequest_m.o: networklayer/manetro
 	networklayer/contract/IPv4Address.h \
 	networklayer/manetrouting/berger/BergerRouteRequest_m.h \
 	util/FWMath.h
+$O/networklayer/manetrouting/berger/BergerTestPkt_m.o: networklayer/manetrouting/berger/BergerTestPkt_m.cc \
+	base/Coord.h \
+	base/INETDefs.h \
+	networklayer/contract/IPv4Address.h \
+	networklayer/manetrouting/berger/BergerTestPkt_m.h \
+	util/FWMath.h
 $O/networklayer/manetrouting/berger/berger.o: networklayer/manetrouting/berger/berger.cc \
 	base/BasicModule.h \
 	base/Coord.h \
@@ -4522,6 +4530,7 @@ $O/networklayer/manetrouting/berger/berger.o: networklayer/manetrouting/berger/b
 	networklayer/manetrouting/berger/BergerNeighborInfo.h \
 	networklayer/manetrouting/berger/BergerNeighborInfo_m.h \
 	networklayer/manetrouting/berger/BergerRouteRequest_m.h \
+	networklayer/manetrouting/berger/BergerTestPkt_m.h \
 	networklayer/manetrouting/berger/berger.h \
 	networklayer/manetrouting/berger/mode.h \
 	util/FWMath.h \

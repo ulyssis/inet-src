@@ -29,6 +29,7 @@ class BERGER : public ManetRoutingBase
     virtual bool isOurType(cPacket*);
     virtual bool getDestAddress(cPacket*, Uint128&);
 	void doLocalBroadcast(cPacket *pk);
+	void doOneHopUnicast(cPacket *pk);//, simtime_t delay);
 	void doGlobalBroadcast(cPacket *pk);
 	void finish();
 
@@ -87,8 +88,8 @@ class BERGER : public ManetRoutingBase
 			const IPv4Address ip;
 			const double x;
 			const double y;
-			const IPv4Address gw1;
-			const IPv4Address gw2;
+			const IPv4Address gw1; //parent
+			const IPv4Address gw2; //child
 			BergerNodeInfo(const IPv4Address& ip, double x, double y, IPv4Address gw1, IPv4Address gw2) : ip(ip),x(x),y(y),gw1(gw1),gw2(gw2){}
 		};
 
@@ -144,4 +145,11 @@ std::ostream& operator<<(std::ostream& os, const BERGER::nh_t& nh)
     return os;
 }
 
-
+std::ostream& operator<<(std::ostream& os, const std::list<int>& path)
+{
+    for(std::list<int>::const_iterator It= path.begin(); It!=path.end(); ++It)
+        {
+        os << *It << ";";
+        }
+    return os;
+}

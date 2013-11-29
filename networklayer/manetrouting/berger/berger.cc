@@ -13,6 +13,7 @@
 // Berger includes:
 #include "berger.h"
 #include "BergerRouteRequest_m.h"
+#include "BergerTestPkt_m.h"
 #include <math.h>       /* log2 */
 
 
@@ -28,7 +29,8 @@ double thermalNoise=-110; //-110dbm, conversion to w is done in function calcula
 double pathLossAlpha=2;
 int messageLength=512;
 int bandwidth = 2.2e+7; //22 MHz
-
+int pathHops;
+std::list<int> pathRoute;
 
 void BERGER::initialize(int stage)
 {
@@ -57,8 +59,10 @@ void BERGER::initialize(int stage)
         bni->setGw1(IPv4Address::UNSPECIFIED_ADDRESS);
         bni->setGw2(IPv4Address::UNSPECIFIED_ADDRESS);
         doLocalBroadcast(bni);
+
         cMessage *localBroadcastBni = new cMessage("localBroadcastBni");
         scheduleAt(0.1, localBroadcastBni);
+
 
 
 		/*
@@ -90,13 +94,32 @@ void BERGER::initialize(int stage)
             rreqMsg->setDst(dstAddr);
             Coord dstPosC(dstPos.x, dstPos.y);
             rreqMsg->setDstPos(dstPosC);
-
             scheduleAt(10, rreqMsg);
+
+            cMessage *sendTestPkt = new cMessage("sendTestPkt");
+            scheduleAt(100.1, sendTestPkt);
             }
 #endif
 	}
 }
 
+void BERGER::doOneHopUnicast(cPacket *pk)
+{
+    IPv4Datagram* p=new IPv4Datagram();
+    p->setSrcAddress(myAddr);
+    p->setDestAddress(IPv4Address::ALLONES_ADDRESS);
+    p->setTimeToLive(1);
+    p->setTransportProtocol(IP_PROT_MANET);
+    IPv4ControlInfo *ipControlInfo = new IPv4ControlInfo();
+    ipControlInfo->setProtocol(IP_PROT_MANET);
+    ipControlInfo->setSrcAddr(myAddr);
+    ipControlInfo->setDestAddr(IPv4Address::ALLONES_ADDRESS);
+    ipControlInfo->setTimeToLive(1);
+    p->setControlInfo(ipControlInfo);
+    p->encapsulate(pk);
+    float delay=exponential(10e-3);
+    sendDelayed(p,delay,"to_ip");
+}
 
 void BERGER::doLocalBroadcast(cPacket *pk)
 {
@@ -222,10 +245,10 @@ void BERGER::handleMessage(cMessage *msg)
 	 */
 	if(BergerRouteRequest* rreq=dynamic_cast<BergerRouteRequest*>(msg))
 	{
-	    if(myAddr.getDByte(3)==15)
-	        {
-	        int stop2 =1;
-	        }
+//	    if(myAddr.getDByte(3)==15)
+//	        {
+//	        int stop2 =1;
+//	        }
 	    if (!sdPairs.size())
 	    {
 	        if(msg->isSelfMessage())
@@ -280,7 +303,62 @@ void BERGER::handleMessage(cMessage *msg)
         cMessage *localBroadcastBni = msg->dup();
         scheduleAt(simTime()+2, localBroadcastBni);
         delete msg;
+        return;
 	    }
+
+
+	if(msg->isSelfMessage() && (!strcmp(msg->getName(), "sendTestPkt")))
+	    {
+	    /*
+	     * the last packet, collecting info of the complete path
+	     */
+	    BergerTestPkt* testPkt = new BergerTestPkt();
+	    Route route;
+	    route.push_back(myAddr.getDByte(3));
+	    testPkt->setRoute(route);
+	    int hops=0;
+	    testPkt->setHops(hops);
+	    testPkt->setDst(dstAddr);
+	    testPkt->setNextHop(gw2);
+
+	    doOneHopUnicast(testPkt);
+	    std::cout << "Node " << myAddr.getDByte(3) << " sends out testPkt at " << simTime() << "\n";
+	    delete msg;
+	    return;
+	    }
+
+	if ( BergerTestPkt* testPkt=dynamic_cast<BergerTestPkt*>(msg))
+        {
+        if(testPkt->getNextHop()== myAddr && myAddr !=dstAddr)
+            {
+            BergerTestPkt* testPkt2 = testPkt->dup();
+            Route retrievedRoute = testPkt->getRoute();
+            retrievedRoute.push_back(myAddr.getDByte(3));
+            testPkt2->setRoute(retrievedRoute);
+
+            int hops = testPkt->getHops();
+            hops++;
+            testPkt2->setHops(hops);
+            testPkt2->setNextHop(gw2);
+
+            doOneHopUnicast(testPkt2);
+            return;
+            }
+        if(testPkt->getNextHop()== myAddr && myAddr ==dstAddr)
+            {
+            int hops = testPkt->getHops();
+            pathHops = ++hops;
+
+            pathRoute = testPkt->getRoute();
+            pathRoute.push_back(myAddr.getDByte(3));
+            return;
+            }
+        delete testPkt;
+        return;
+        }
+
+
+
 }
 
 void BERGER::positionUpdated(double x, double y)
@@ -395,7 +473,12 @@ void BERGER::updateLocalLinks(const BergerNodeInfo& src, const BergerNodeInfo& d
         {
             parents[It->first] = It->second;
         }
-        if ((srcC.distance(nbC)>= srcC.distance(selfC) && dstC.distance(nbC)<= dstC.distance(selfC)) || It->first == dst.ip)
+//        strict children set
+//        if ((srcC.distance(nbC)>= srcC.distance(selfC) && dstC.distance(nbC)<= dstC.distance(selfC)) || It->first == dst.ip)
+//            {
+//            children[It->first] = It->second;
+//            }
+        if (dstC.distance(nbC)<= dstC.distance(selfC) || It->first == dst.ip)
             {
             children[It->first] = It->second;
             }
@@ -603,36 +686,38 @@ void BERGER::finish()
 //        }
 
     std::string resultFileName = par("resultFileName");
-    resultFileName+="_basic.csv";
-    const char * resultFileNamechar = resultFileName.c_str();
+    std::string resultFileName1=resultFileName + "_hops.csv";
+    const char * resultFileNamechar1 = resultFileName1.c_str();
 
     std::ofstream fileio;
-    fileio.open (resultFileNamechar, std::ios::app);
-//    int numForwarded = getParentModule()->getSubmodule("networkLayer")->getSubmodule("ip")->par("numForwarded_berger_ned");
-//    int numUDPPassedUp;
+    fileio.open (resultFileNamechar1, std::ios::app);
 
-//    // exclude the host nodes which don't have udp submodule
-//    if (myAddr.getDByte(3)<3)
-//        {
-//        numUDPPassedUp = getParentModule()->getSubmodule("udp")->par("numPassedUp_berger_ned");
-//        }
-//    else
-//        {
-//        numUDPPassedUp = 0;
-//        }
-    //    int numForwarded = IPv4_berger->numForwarded_berger; // use the pointer to the whole submodule
-
+      if (fileio.is_open())
+          {
+//          fileio << myAddr << ";" << state.first << ";" << state.second << ";" << gw1.getDByte(3) <<  ";" << gw2.getDByte(3) << "\n";
+          if (myAddr.getDByte(3) == dstAddr.getDByte(3))
+              {
+              fileio << "Generated_path: " << ";" << pathHops << ";" << "," << pathRoute << "\n";
+              }
+          fileio.flush();
+          fileio.close();
+          fileio <<std::endl;
+          }
 
 
+      std::string resultFileName2 =resultFileName + "_metric.csv";
+      const char * resultFileNamechar2 = resultFileName2.c_str();
+
+      fileio.open (resultFileNamechar2, std::ios::app);
       if (fileio.is_open())
           {
           fileio << myAddr << ";" << state.first << ";" << state.second << ";" << gw1.getDByte(3) <<  ";" << gw2.getDByte(3) << "\n";
           fileio.flush();
           fileio.close();
           fileio <<std::endl;
-          std::cout<< myAddr.getDByte(3) <<" closes output file!!!!" << "\n";
           }
 
+      std::cout<< myAddr.getDByte(3) <<" closes output file!!!!" << "\n";
     }
 
 uint32_t BERGER::getRoute(const Uint128&, std::vector<Uint128>&)
