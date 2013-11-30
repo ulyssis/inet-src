@@ -481,10 +481,10 @@ void BERGER::updateLocalLinks(const BergerNodeInfo& src, const BergerNodeInfo& d
 	    {
 	    int id = It->first.getDByte(3);
 	    Coord nbC(It->second->getRouterXPos(), It->second->getRouterYPos());
-	    double distance0 = srcC.distance(nbC);
-	    double distance1 = srcC.distance(selfC);
-	    double distance2 = dstC.distance(nbC);
-	    double distance3 = dstC.distance(selfC);
+//	    double distance0 = srcC.distance(nbC);
+//	    double distance1 = srcC.distance(selfC);
+//	    double distance2 = dstC.distance(nbC);
+//	    double distance3 = dstC.distance(selfC);
         if ((srcC.distance(nbC)<= srcC.distance(selfC) && dstC.distance(nbC) >= dstC.distance(selfC)) || It->first == src.ip)
         {
             parents[It->first] = It->second;

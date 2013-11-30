@@ -126,14 +126,14 @@ void GPSR::handleMessage(cMessage *msg) //class SIM_API cPacket : public cMessag
 			// insert new entry:
 			neighborhood[neighborAddr]=bni;
 			// update local links:
-			updateLocalLinks(neighborAddr,bni->getRouterXPos(),bni->getRouterYPos()); // First updateLocalLinks
+//			updateLocalLinks(neighborAddr,bni->getRouterXPos(),bni->getRouterYPos()); // First updateLocalLinks
 			return;
 		}
 
 		// Question: Is the following necessary? node has no idea of s-d, how to form local link?
 		// Entry does not exist:
 		neighborhood[neighborAddr]=bni;
-		updateLocalLinks(neighborAddr,bni->getRouterXPos(),bni->getRouterYPos()); // First updateLocalLinks
+//		updateLocalLinks(neighborAddr,bni->getRouterXPos(),bni->getRouterYPos()); // First updateLocalLinks
 		return;
 	}
 
@@ -258,43 +258,43 @@ void GPSR::positionUpdated(double x, double y)
 	posTable[myAddr]=Coord(x,y);
     }
 
-// decide two half routes, but how does every node know s-d pairs?
-void GPSR::updateLocalLinks(const IPv4Address& updatedNeighbor, double nbX, double nbY)
-{
-	ev << "GPSR: " << myAddr << " looks for better links through " << updatedNeighbor << endl;
-	for(sdPairs_t::const_iterator sdPairsIt=sdPairs.begin();sdPairsIt!=sdPairs.end();++sdPairsIt)
-	{
-		double oldQuality=0;
-		ll_t::const_iterator llIt=localLinks.find(sdPairsIt->first);//as to current sd pair, whether its local link exist
-		if(llIt!=localLinks.end()) // exist
-		{
-			oldQuality=llIt->second.quality;
-		}
-		for(nh_t::const_iterator nhIt=neighborhood.begin();nhIt!=neighborhood.end();++nhIt)
-		{
-			const GpsrNodeInfo src=GpsrNodeInfo(sdPairsIt->first.src,sdPairsIt->second.srcPos.x,sdPairsIt->second.srcPos.y);
-			const GpsrNodeInfo dst=GpsrNodeInfo(sdPairsIt->first.dst,sdPairsIt->second.dstPos.x,sdPairsIt->second.dstPos.y);
-			const GpsrNodeInfo oldNb=GpsrNodeInfo(nhIt->second->getRouterAddress(),nhIt->second->getRouterXPos(),nhIt->second->getRouterYPos());
-			const GpsrNodeInfo newNb=GpsrNodeInfo(updatedNeighbor, nbX, nbY);
-			const GpsrNodeInfo self=GpsrNodeInfo(myAddr,getXPos(),getYPos());
-			double newQuality=calculateLocalLinkQuality(src,oldNb,self,newNb,dst); //current: based on the length
-			if(newQuality>oldQuality)
-			{
-				ev << "GPSR: Updating local link: " << sdPairsIt->first.src << "<->" << nhIt->second->getRouterAddress() << "<->" << myAddr << "<->" << updatedNeighbor << "<->" << sdPairsIt->first.dst << endl;
-				// parameters: sourse address, a neighbor's address, new discovered neighbor, destination address, quality!
-				updateRoute(sdPairsIt->first.src,nhIt->second->getRouterAddress(),updatedNeighbor,sdPairsIt->first.dst,newQuality);
-				oldQuality=newQuality;
-			}
-			newQuality=calculateLocalLinkQuality(src,newNb,self,oldNb,dst);
-			if(newQuality>oldQuality)
-			{
-				ev << "GPSR: Updating local link: " << sdPairsIt->first.src << "<->" << updatedNeighbor << "<->" << myAddr << "<->" << nhIt->second->getRouterAddress() << "<->" << sdPairsIt->first.dst << endl;
-				updateRoute(sdPairsIt->first.src,updatedNeighbor,nhIt->second->getRouterAddress(),sdPairsIt->first.dst,newQuality);
-				oldQuality=newQuality;
-			}
-		}
-	}
-}
+//// decide two half routes, but how does every node know s-d pairs?
+//void GPSR::updateLocalLinks(const IPv4Address& updatedNeighbor, double nbX, double nbY)
+//{
+//	ev << "GPSR: " << myAddr << " looks for better links through " << updatedNeighbor << endl;
+//	for(sdPairs_t::const_iterator sdPairsIt=sdPairs.begin();sdPairsIt!=sdPairs.end();++sdPairsIt)
+//	{
+//		double oldQuality=0;
+//		ll_t::const_iterator llIt=localLinks.find(sdPairsIt->first);//as to current sd pair, whether its local link exist
+//		if(llIt!=localLinks.end()) // exist
+//		{
+//			oldQuality=llIt->second.quality;
+//		}
+//		for(nh_t::const_iterator nhIt=neighborhood.begin();nhIt!=neighborhood.end();++nhIt)
+//		{
+//			const GpsrNodeInfo src=GpsrNodeInfo(sdPairsIt->first.src,sdPairsIt->second.srcPos.x,sdPairsIt->second.srcPos.y);
+//			const GpsrNodeInfo dst=GpsrNodeInfo(sdPairsIt->first.dst,sdPairsIt->second.dstPos.x,sdPairsIt->second.dstPos.y);
+//			const GpsrNodeInfo oldNb=GpsrNodeInfo(nhIt->second->getRouterAddress(),nhIt->second->getRouterXPos(),nhIt->second->getRouterYPos());
+//			const GpsrNodeInfo newNb=GpsrNodeInfo(updatedNeighbor, nbX, nbY);
+//			const GpsrNodeInfo self=GpsrNodeInfo(myAddr,getXPos(),getYPos());
+//			double newQuality=calculateLocalLinkQuality(src,oldNb,self,newNb,dst); //current: based on the length
+//			if(newQuality>oldQuality)
+//			{
+//				ev << "GPSR: Updating local link: " << sdPairsIt->first.src << "<->" << nhIt->second->getRouterAddress() << "<->" << myAddr << "<->" << updatedNeighbor << "<->" << sdPairsIt->first.dst << endl;
+//				// parameters: sourse address, a neighbor's address, new discovered neighbor, destination address, quality!
+//				updateRoute(sdPairsIt->first.src,nhIt->second->getRouterAddress(),updatedNeighbor,sdPairsIt->first.dst,newQuality);
+//				oldQuality=newQuality;
+//			}
+//			newQuality=calculateLocalLinkQuality(src,newNb,self,oldNb,dst);
+//			if(newQuality>oldQuality)
+//			{
+//				ev << "GPSR: Updating local link: " << sdPairsIt->first.src << "<->" << updatedNeighbor << "<->" << myAddr << "<->" << nhIt->second->getRouterAddress() << "<->" << sdPairsIt->first.dst << endl;
+//				updateRoute(sdPairsIt->first.src,updatedNeighbor,nhIt->second->getRouterAddress(),sdPairsIt->first.dst,newQuality);
+//				oldQuality=newQuality;
+//			}
+//		}
+//	}
+//}
 
 void GPSR::updateLocalLinks() //overload
     {
@@ -304,28 +304,61 @@ void GPSR::updateLocalLinks() //overload
         const GpsrNodeInfo dst = GpsrNodeInfo(sdPairsIt->first.dst, sdPairsIt->second.dstPos.x, sdPairsIt->second.dstPos.y);
         const GpsrNodeInfo self = GpsrNodeInfo(myAddr,getXPos(),getYPos());
         ev << "GPSR: " << myAddr << " looks for better links from " << src << " to " << dst << endl;
-        double oldQuality = 0;
+        double oldQuality = 1000000;
         ll_t::const_iterator llIt = localLinks.find(sdPairKey(src.ip,dst.ip));
         if(llIt!=localLinks.end())
             {
             oldQuality=llIt->second.quality;
             }
-        for(nh_t::const_iterator aIt=neighborhood.begin();aIt!=neighborhood.end();++aIt)    //look for a\in U_i
+
+        // decide parent/children neighbors
+        Coord srcC(src.x,src.y);
+        Coord dstC(dst.x,dst.y);
+        Coord selfC(getXPos(),getYPos());
+
+        for(nh_t::const_iterator It=neighborhood.begin(); It!=neighborhood.end(); ++It)
             {
-            for(nh_t::const_iterator bIt=neighborhood.begin();bIt!=neighborhood.end();++bIt)    //look for b\in D_i
+            int id = It->first.getDByte(3);
+            Coord nbC(It->second->getRouterXPos(), It->second->getRouterYPos());
+
+            if (dstC.distance(nbC)<= dstC.distance(selfC) || It->first == dst.ip)
                 {
-                const GpsrNodeInfo a=GpsrNodeInfo(aIt->second->getRouterAddress(),aIt->second->getRouterXPos(),aIt->second->getRouterYPos());
+                children[It->first] = It->second;
+                }
+             }
+
+        std::cout << "BERGER: Node " << myAddr.getDByte(3) << " (" << neighborhood.size() << ": " << neighborhood << ", parents: " << children << "), forms local links for the first time, from " << src << " to " << dst << endl;
+
+
+
+        if(!children.size())
+        {
+            for(nh_t::const_iterator bIt=children.begin();bIt!=children.end();++bIt)    //look for b\in D_i
+                {
                 const GpsrNodeInfo b=GpsrNodeInfo(bIt->second->getRouterAddress(),bIt->second->getRouterXPos(),bIt->second->getRouterYPos());
                 const GpsrNodeInfo self=GpsrNodeInfo(myAddr,getXPos(),getYPos());
-                double newQuality=calculateLocalLinkQuality(src,a,self,b,dst);
-                if(newQuality>oldQuality)
+                double newQuality = calculateLocalLinkQuality(b,dst);
+                if(newQuality < oldQuality)
                     {
-                    ev << "GPSR: Updating local link: " << src.ip << "<->" << aIt->second->getRouterAddress() << "<->" << myAddr << "<->" << bIt->second->getRouterAddress() << "<->" << dst.ip << endl;
-                    updateRoute(src.ip, aIt->second->getRouterAddress(), bIt->second->getRouterAddress(), dst.ip, newQuality);
-                    oldQuality=newQuality;
+                    std::cout << "GPSR: Updating local link: " << myAddr << "<->" << bIt->second->getRouterAddress() << "<->" << dst.ip << endl;
+                    updateRoute(src.ip, IPv4Address::UNSPECIFIED_ADDRESS, b.ip, dst.ip, newQuality);
+                    oldQuality = newQuality;
                     }
                 }
-            }
+        }
+        else
+            for(nh_t::const_iterator bIt=neighborhood.begin();bIt!=neighborhood.end();++bIt)    //TODO: exclude the upstream node
+                {
+                const GpsrNodeInfo b=GpsrNodeInfo(bIt->second->getRouterAddress(),bIt->second->getRouterXPos(),bIt->second->getRouterYPos());
+                const GpsrNodeInfo self=GpsrNodeInfo(myAddr,getXPos(),getYPos());
+                double newQuality = calculateLocalLinkQuality(b,dst);
+                if(newQuality < oldQuality)
+                    {
+                    std::cout << "GPSR: Updating local link: " << myAddr << "<->" << bIt->second->getRouterAddress() << "<->" << dst.ip << endl;
+                    updateRoute(src.ip, IPv4Address::UNSPECIFIED_ADDRESS, b.ip, dst.ip, newQuality);
+                    oldQuality = newQuality;
+                    }
+                }
         }
     }
 
@@ -336,8 +369,6 @@ void GPSR::updateRoute(const IPv4Address& src, const IPv4Address& a, const IPv4A
 	// remove the previous route:
     IPv4Route* previousRoute = routingTable -> findBestMatchingRoute(dst);
 	routingTable -> removeRoute(previousRoute);
-    previousRoute = routingTable -> findBestMatchingRoute(src);
-    routingTable -> removeRoute(previousRoute);
 
 	// Add new routes:
 	IPv4Route* pathToDst=new IPv4Route();
@@ -349,27 +380,16 @@ void GPSR::updateRoute(const IPv4Address& src, const IPv4Address& a, const IPv4A
 	pathToDst->setMetric(quality);
 	routingTable->addRoute(pathToDst);
 
-	IPv4Route* pathToSrc=new IPv4Route();
-	pathToSrc->setDestination(src);
-	pathToSrc->setNetmask(IPv4Address("255.255.255.255"));
-	pathToSrc->setGateway(a);
-	pathToSrc->setInterface(routingTable->getInterfaceByAddress(myAddr));
-	pathToSrc->setSource(IPv4Route::MANET);
-	pathToSrc->setMetric(quality);
-	routingTable->addRoute(pathToSrc);
 }
 
-double GPSR::calculateLocalLinkQuality(const GpsrNodeInfo& src, const GpsrNodeInfo& a, const GpsrNodeInfo& self, const GpsrNodeInfo& b, const GpsrNodeInfo& dst) const
+double GPSR::calculateLocalLinkQuality(const GpsrNodeInfo& b, const GpsrNodeInfo& dst) const
 {
-	ev << "GPSR: Calculating quality for local link " << src << "<->" << a << "<->" << self << "<->" << b << "<->" << dst << endl;
-	Coord srcC(src.x,src.y);
-	Coord aC(a.x,a.y);
-	Coord selfC(self.x,self.y);
+	ev << "GPSR: Calculating quality for local link "  << b << "<->" << dst << endl;
 	Coord bC(b.x,b.y);
 	Coord dstC(dst.x,dst.y);
-	double length=srcC.distance(aC)+aC.distance(selfC)+selfC.distance(bC)+bC.distance(dstC);
-	ev << "GPSR: l=" << length << endl;
-	return 1./length;
+	double length=bC.distance(dstC);
+	ev << "GPSR:: l=" << length << endl;
+	return length;
 }
 
 uint32_t GPSR::getRoute(const Uint128&, std::vector<Uint128>&)

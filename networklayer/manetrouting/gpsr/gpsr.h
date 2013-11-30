@@ -38,6 +38,7 @@ class GPSR : public ManetRoutingBase
 		IRoutingTable* routingTable;
 		IPv4Address myAddr;
 		IPv4Address dstAddr;
+		nh_t children;
 
 		nh_t neighborhood, neighborhoodBackup;
         simtime_t time_updateNh;
@@ -85,7 +86,7 @@ class GPSR : public ManetRoutingBase
 			GpsrNodeInfo(const IPv4Address& ip,double x,double y) : ip(ip),x(x),y(y) {}
 		};
 
-		double calculateLocalLinkQuality(const GpsrNodeInfo& src, const GpsrNodeInfo& a, const GpsrNodeInfo& self, const GpsrNodeInfo& b, const GpsrNodeInfo& dst) const;
+		double calculateLocalLinkQuality(const GpsrNodeInfo& b, const GpsrNodeInfo& dst) const;
 
 		friend std::ostream& operator<<(std::ostream& os, const GPSR::GpsrNodeInfo& b);
 
