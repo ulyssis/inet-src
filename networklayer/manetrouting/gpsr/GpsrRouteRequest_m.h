@@ -27,6 +27,8 @@
 // cplusplus {{
 #include "IPv4Address.h"
 #include "Coord.h"
+#include <list>
+typedef std::list<int> PassedNode;
 // }}
 
 
@@ -36,16 +38,19 @@
  * <pre>
  * packet GpsrRouteRequest
  * {
+ *     PassedNode passedNode;
  * 	IPv4Address src;
  * 	IPv4Address dst;
  * 	Coord srcPos;
  * 	Coord dstPos;
+ * 	
  * }
  * </pre>
  */
 class INET_API GpsrRouteRequest : public ::cPacket
 {
   protected:
+    PassedNode passedNode_var;
     IPv4Address src_var;
     IPv4Address dst_var;
     Coord srcPos_var;
@@ -68,6 +73,9 @@ class INET_API GpsrRouteRequest : public ::cPacket
     virtual void parsimUnpack(cCommBuffer *b);
 
     // field getter/setter methods
+    virtual PassedNode& getPassedNode();
+    virtual const PassedNode& getPassedNode() const {return const_cast<GpsrRouteRequest*>(this)->getPassedNode();}
+    virtual void setPassedNode(const PassedNode& passedNode);
     virtual IPv4Address& getSrc();
     virtual const IPv4Address& getSrc() const {return const_cast<GpsrRouteRequest*>(this)->getSrc();}
     virtual void setSrc(const IPv4Address& src);

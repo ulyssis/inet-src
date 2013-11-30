@@ -327,11 +327,11 @@ void GPSR::updateLocalLinks() //overload
                 }
              }
 
-        std::cout << "BERGER: Node " << myAddr.getDByte(3) << " (" << neighborhood.size() << ": " << neighborhood << ", parents: " << children << "), forms local links for the first time, from " << src << " to " << dst << endl;
+        std::cout << "BERGER: Node " << myAddr.getDByte(3) << " (" << neighborhood.size() << ": " << neighborhood << ", children set: " << children << "), forms local links for the first time, from " << src << " to " << dst << endl;
 
 
 
-        if(!children.size())
+        if(children.size())
         {
             for(nh_t::const_iterator bIt=children.begin();bIt!=children.end();++bIt)    //look for b\in D_i
                 {
@@ -346,7 +346,7 @@ void GPSR::updateLocalLinks() //overload
                     }
                 }
         }
-        else
+        if(!children.size())
             for(nh_t::const_iterator bIt=neighborhood.begin();bIt!=neighborhood.end();++bIt)    //TODO: exclude the upstream node
                 {
                 const GpsrNodeInfo b=GpsrNodeInfo(bIt->second->getRouterAddress(),bIt->second->getRouterXPos(),bIt->second->getRouterYPos());
@@ -387,9 +387,34 @@ double GPSR::calculateLocalLinkQuality(const GpsrNodeInfo& b, const GpsrNodeInfo
 	ev << "GPSR: Calculating quality for local link "  << b << "<->" << dst << endl;
 	Coord bC(b.x,b.y);
 	Coord dstC(dst.x,dst.y);
-	double length=bC.distance(dstC);
-	ev << "GPSR:: l=" << length << endl;
-	return length;
+//	double length=bC.distance(dstC);
+//	ev << "GPSR:: l=" << length << endl;
+//	return length;
+
+    /*
+     * we use delay as metric
+     */
+
+    double transmitterPower=par("transmitterPower");
+    double thermalNoise=par("thermalNoise"); //-110dbm, conversion to w is done in function calculateLocalLinkQuality()
+    double pathLossAlpha=par("pathLossAlpha");
+    int messageLength=par("messageLength");
+    int bandwidth = par("bandwidth"); //22 MHz
+
+    double delay, r;
+
+    thermalNoise = pow(10,     thermalNoise/10)/1000;
+
+    double snr = transmitterPower * pow(bC.distance(dstC), (-pathLossAlpha))/pow(thermalNoise,2);
+    delay = messageLength / (bandwidth* log2(1+snr));
+    double wayToGo = bC.distance(dstC);//distance to dst
+    r= delay*wayToGo;
+    std::cout << "GPSR: Node " << myAddr.getDByte(3) << "'s delay= " << delay << ". utility= " << r << endl;
+    return r;
+
+
+
+
 }
 
 uint32_t GPSR::getRoute(const Uint128&, std::vector<Uint128>&)

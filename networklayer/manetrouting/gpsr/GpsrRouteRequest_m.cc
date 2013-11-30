@@ -55,6 +55,7 @@ GpsrRouteRequest& GpsrRouteRequest::operator=(const GpsrRouteRequest& other)
 
 void GpsrRouteRequest::copy(const GpsrRouteRequest& other)
 {
+    this->passedNode_var = other.passedNode_var;
     this->src_var = other.src_var;
     this->dst_var = other.dst_var;
     this->srcPos_var = other.srcPos_var;
@@ -64,6 +65,7 @@ void GpsrRouteRequest::copy(const GpsrRouteRequest& other)
 void GpsrRouteRequest::parsimPack(cCommBuffer *b)
 {
     cPacket::parsimPack(b);
+    doPacking(b,this->passedNode_var);
     doPacking(b,this->src_var);
     doPacking(b,this->dst_var);
     doPacking(b,this->srcPos_var);
@@ -73,10 +75,21 @@ void GpsrRouteRequest::parsimPack(cCommBuffer *b)
 void GpsrRouteRequest::parsimUnpack(cCommBuffer *b)
 {
     cPacket::parsimUnpack(b);
+    doUnpacking(b,this->passedNode_var);
     doUnpacking(b,this->src_var);
     doUnpacking(b,this->dst_var);
     doUnpacking(b,this->srcPos_var);
     doUnpacking(b,this->dstPos_var);
+}
+
+PassedNode& GpsrRouteRequest::getPassedNode()
+{
+    return passedNode_var;
+}
+
+void GpsrRouteRequest::setPassedNode(const PassedNode& passedNode)
+{
+    this->passedNode_var = passedNode;
 }
 
 IPv4Address& GpsrRouteRequest::getSrc()
@@ -166,7 +179,7 @@ const char *GpsrRouteRequestDescriptor::getProperty(const char *propertyname) co
 int GpsrRouteRequestDescriptor::getFieldCount(void *object) const
 {
     cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 4+basedesc->getFieldCount(object) : 4;
+    return basedesc ? 5+basedesc->getFieldCount(object) : 5;
 }
 
 unsigned int GpsrRouteRequestDescriptor::getFieldTypeFlags(void *object, int field) const
@@ -182,8 +195,9 @@ unsigned int GpsrRouteRequestDescriptor::getFieldTypeFlags(void *object, int fie
         FD_ISCOMPOUND,
         FD_ISCOMPOUND,
         FD_ISCOMPOUND,
+        FD_ISCOMPOUND,
     };
-    return (field>=0 && field<4) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<5) ? fieldTypeFlags[field] : 0;
 }
 
 const char *GpsrRouteRequestDescriptor::getFieldName(void *object, int field) const
@@ -195,22 +209,24 @@ const char *GpsrRouteRequestDescriptor::getFieldName(void *object, int field) co
         field -= basedesc->getFieldCount(object);
     }
     static const char *fieldNames[] = {
+        "passedNode",
         "src",
         "dst",
         "srcPos",
         "dstPos",
     };
-    return (field>=0 && field<4) ? fieldNames[field] : NULL;
+    return (field>=0 && field<5) ? fieldNames[field] : NULL;
 }
 
 int GpsrRouteRequestDescriptor::findField(void *object, const char *fieldName) const
 {
     cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount(object) : 0;
-    if (fieldName[0]=='s' && strcmp(fieldName, "src")==0) return base+0;
-    if (fieldName[0]=='d' && strcmp(fieldName, "dst")==0) return base+1;
-    if (fieldName[0]=='s' && strcmp(fieldName, "srcPos")==0) return base+2;
-    if (fieldName[0]=='d' && strcmp(fieldName, "dstPos")==0) return base+3;
+    if (fieldName[0]=='p' && strcmp(fieldName, "passedNode")==0) return base+0;
+    if (fieldName[0]=='s' && strcmp(fieldName, "src")==0) return base+1;
+    if (fieldName[0]=='d' && strcmp(fieldName, "dst")==0) return base+2;
+    if (fieldName[0]=='s' && strcmp(fieldName, "srcPos")==0) return base+3;
+    if (fieldName[0]=='d' && strcmp(fieldName, "dstPos")==0) return base+4;
     return basedesc ? basedesc->findField(object, fieldName) : -1;
 }
 
@@ -223,12 +239,13 @@ const char *GpsrRouteRequestDescriptor::getFieldTypeString(void *object, int fie
         field -= basedesc->getFieldCount(object);
     }
     static const char *fieldTypeStrings[] = {
+        "PassedNode",
         "IPv4Address",
         "IPv4Address",
         "Coord",
         "Coord",
     };
-    return (field>=0 && field<4) ? fieldTypeStrings[field] : NULL;
+    return (field>=0 && field<5) ? fieldTypeStrings[field] : NULL;
 }
 
 const char *GpsrRouteRequestDescriptor::getFieldProperty(void *object, int field, const char *propertyname) const
@@ -268,10 +285,11 @@ std::string GpsrRouteRequestDescriptor::getFieldAsString(void *object, int field
     }
     GpsrRouteRequest *pp = (GpsrRouteRequest *)object; (void)pp;
     switch (field) {
-        case 0: {std::stringstream out; out << pp->getSrc(); return out.str();}
-        case 1: {std::stringstream out; out << pp->getDst(); return out.str();}
-        case 2: {std::stringstream out; out << pp->getSrcPos(); return out.str();}
-        case 3: {std::stringstream out; out << pp->getDstPos(); return out.str();}
+        case 0: {std::stringstream out; out << pp->getPassedNode(); return out.str();}
+        case 1: {std::stringstream out; out << pp->getSrc(); return out.str();}
+        case 2: {std::stringstream out; out << pp->getDst(); return out.str();}
+        case 3: {std::stringstream out; out << pp->getSrcPos(); return out.str();}
+        case 4: {std::stringstream out; out << pp->getDstPos(); return out.str();}
         default: return "";
     }
 }
@@ -299,12 +317,13 @@ const char *GpsrRouteRequestDescriptor::getFieldStructName(void *object, int fie
         field -= basedesc->getFieldCount(object);
     }
     static const char *fieldStructNames[] = {
+        "PassedNode",
         "IPv4Address",
         "IPv4Address",
         "Coord",
         "Coord",
     };
-    return (field>=0 && field<4) ? fieldStructNames[field] : NULL;
+    return (field>=0 && field<5) ? fieldStructNames[field] : NULL;
 }
 
 void *GpsrRouteRequestDescriptor::getFieldStructPointer(void *object, int field, int i) const
@@ -317,10 +336,11 @@ void *GpsrRouteRequestDescriptor::getFieldStructPointer(void *object, int field,
     }
     GpsrRouteRequest *pp = (GpsrRouteRequest *)object; (void)pp;
     switch (field) {
-        case 0: return (void *)(&pp->getSrc()); break;
-        case 1: return (void *)(&pp->getDst()); break;
-        case 2: return (void *)(&pp->getSrcPos()); break;
-        case 3: return (void *)(&pp->getDstPos()); break;
+        case 0: return (void *)(&pp->getPassedNode()); break;
+        case 1: return (void *)(&pp->getSrc()); break;
+        case 2: return (void *)(&pp->getDst()); break;
+        case 3: return (void *)(&pp->getSrcPos()); break;
+        case 4: return (void *)(&pp->getDstPos()); break;
         default: return NULL;
     }
 }

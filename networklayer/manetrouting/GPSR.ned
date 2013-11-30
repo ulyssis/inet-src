@@ -39,6 +39,13 @@ simple GPSR extends BaseRouting like IManetRouting
         bool PublicRoutingTables =default(false);
                         string resultFileName=default("GPSR");
                                         double pathLength=default(0);
+                                        
+        double lambda=double(1.0e-4);
+        double transmitterPower=double(6e-4);
+        double thermalNoise=double(-110); //-110dbm, conversion to w is done in function calculateLocalLinkQuality()
+        double pathLossAlpha=double(2);
+        int messageLength=int(512);
+        int bandwidth = int(2.2e+7); //22 MHz
     gates:
         input from_ip;
         output to_ip;
