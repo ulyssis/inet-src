@@ -68,7 +68,7 @@
 #include "aodv_msg_struct.h"
 #include "ICMPAccess.h"
 #include "Ieee80211Frame_m.h"
-
+#include <fstream>
 
 /* Forward declaration needed to be able to reference the class */
 class AODVUU;
@@ -116,6 +116,10 @@ class AODVUU : public ManetRoutingBase
 {
 
   private:
+    IRoutingTable* routingTable;
+    IPv4Address myAddr;
+    IPv4Address dstAddr;
+
     char nodeName[50];
     ICMPAccess icmpAccess;
     bool useIndex;

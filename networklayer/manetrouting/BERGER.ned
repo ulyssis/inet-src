@@ -38,7 +38,10 @@ simple BERGER extends BaseRouting like IManetRouting
         @reactive;                             // IP module will send control messages when no route is present to the destination 
         bool PublicRoutingTables =default(false);
 //        double messageLength = default(512);
-        string resultFileName=default("null");
+        string resultFileName=default("BERGER");
+        string IPstring=default("0.0.0.0");
+                double pathLength=default(0);
+
        
     gates:
         input from_ip;

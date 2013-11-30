@@ -37,6 +37,8 @@ simple GPSR extends BaseRouting like IManetRouting
         @class(GPSR);
         @reactive;                             // IP module will send control messages when no route is present to the destination 
         bool PublicRoutingTables =default(false);
+                        string resultFileName=default("GPSR");
+                                        double pathLength=default(0);
     gates:
         input from_ip;
         output to_ip;

@@ -32,6 +32,8 @@
 #include "ProtocolMap.h"
 #include "ControlManetRouting_m.h"
 #include "IPv4ControlInfo.h"
+#include <fstream>
+
 #else
 #include "Blackboard.h"
 #include "LinkBreak.h"
@@ -193,6 +195,10 @@ class DSRUU:public cSimpleModule, public INotifiable
     static int lifo_token;
 
   private:
+    IRoutingTable* routingTable;
+    IPv4Address myAddr;
+    IPv4Address dstAddr;
+
     bool is_init;
     struct in_addr myaddr_;
     MACAddress macaddr_;

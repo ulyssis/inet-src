@@ -64,6 +64,8 @@ simple AODVUU extends BaseRouting like IManetRouting
         bool propagateProactive = default(true); // Proactive feedback
         bool checkNextHop = default(false);
         bool PublicRoutingTables =default(false);
+                        string resultFileName=default("AODVUU");
+                                        double pathLength=default(0);
     gates:
         input from_ip;
         output to_ip;

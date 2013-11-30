@@ -12,6 +12,7 @@
 
 // Gpsr includes:
 #include "GpsrNeighborInfo.h"
+#include <fstream>
 
 typedef std::tr1::unordered_map<IPv4Address,GpsrNeighborInfo*,hashIPv4Address> nh_t;
 
@@ -28,6 +29,7 @@ class GPSR : public ManetRoutingBase
     virtual bool getDestAddress(cPacket*, Uint128&);
 	void doLocalBroadcast(cPacket *pk);
 	void doGlobalBroadcast(cPacket *pk);
+    void finish();
 
 	protected:
 		virtual void positionUpdated(double x,double y);
@@ -35,6 +37,7 @@ class GPSR : public ManetRoutingBase
 	private:
 		IRoutingTable* routingTable;
 		IPv4Address myAddr;
+		IPv4Address dstAddr;
 
 		nh_t neighborhood, neighborhoodBackup;
         simtime_t time_updateNh;

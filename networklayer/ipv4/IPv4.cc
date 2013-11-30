@@ -29,10 +29,18 @@
 #include "IPv4InterfaceData.h"
 #include "IRoutingTable.h"
 
+#define run_BERGER
 
 Define_Module(IPv4);
 Register_Class(IPv4Datagram);
 
+#ifdef run_BERGER
+IPv4Address _dstAddr;
+double pathLength;
+int ttl_on_src;
+int ttl_on_dst;
+bool RECORD = false;
+#endif
 
 void IPv4::initialize()
 {
@@ -129,9 +137,37 @@ InterfaceEntry *IPv4::getSourceInterfaceFrom(cPacket *msg)
 
 void IPv4::handlePacketFromNetwork(IPv4Datagram *datagram, InterfaceEntry *fromIE)
 {
+
+#ifdef run_BERGER
+    if(rt->getRouterId().getDByte(3) == 13 && !RECORD)
+    {
+        int protocol = datagram->getTransportProtocol();
+        if(protocol == 17)
+        {
+            ttl_on_dst = datagram->getTimeToLive();
+            RECORD = true;
+        }
+        pathLength = 100 - ttl_on_dst;
+        getParentModule()->getParentModule()->getSubmodule("manetrouting")->par("pathLength").setDoubleValue(pathLength);
+    }
+
+#endif
+
     ASSERT(datagram);
     ASSERT(fromIE);
 
+//#ifdef run_BERGER
+//
+//    std::string packetName = datagram->getName();
+//    std::string UDPName ("UDPBasicAppData");
+//
+//    if (rt->getRouterId().getDByte(3) == 13 && !packetName.compare(0, 15, UDPName))
+//        {
+//        pathLength = 100- datagram->getTimeToLive();
+//        int ttl;
+//        ttl= datagram->getTimeToLive();
+//        }
+//#endif
     //
     // "Prerouting"
     //
@@ -160,6 +196,7 @@ void IPv4::handlePacketFromNetwork(IPv4Datagram *datagram, InterfaceEntry *fromI
     IPv4Address &destAddr = datagram->getDestAddress();
 
     EV << "Received datagram `" << datagram->getName() << "' with dest=" << destAddr << "\n";
+    std::cout << "Received datagram `" << datagram->getName() << "' with dest=" << destAddr << "\n";
 
     if (fromIE->isLoopback())
     {
@@ -263,6 +300,27 @@ void IPv4::handleReceivedICMP(ICMPMessage *msg)
 
 void IPv4::handleMessageFromHL(cPacket *msg)
 {
+
+//#ifdef run_BERGER
+//
+//    if(rt->getRouterId().getDByte(3) == 41 && dynamic_cast<IPv4Datagram*> (msg) )
+//    {
+//        std::cout << "Name of this msg is: " << msg->getKind() << "\n";
+//        IPv4Datagram *datagram = dynamic_cast<IPv4Datagram*> (msg);
+//        int protocol = datagram ->getTransportProtocol();
+//        std::cout << "Name of this msg is: " << datagram->getKind() << "\n";
+//        if (ttl_on_src = datagram->getTimeToLive()!=1)
+//            {
+//            int stopddddd=1;
+//            }
+//        if(protocol == 17)
+//        {
+//            ttl_on_src = datagram->getTimeToLive();
+//        }
+//    }
+//
+//#endif
+
     // if no interface exists, do not send datagram
     if (ift->getNumInterfaces() == 0)
     {

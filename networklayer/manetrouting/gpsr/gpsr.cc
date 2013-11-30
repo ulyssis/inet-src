@@ -14,6 +14,7 @@
 #include "GpsrRouteRequest_m.h"
 #include "GpsrHello_m.h"
 #include "GpsrHelloAck_m.h"
+#define BEACONING
 
 Define_Module(GPSR);
 
@@ -30,14 +31,20 @@ void GPSR::initialize(int stage)
 		routingTable=check_and_cast<IRoutingTable*>(getParentModule()->getSubmodule("routingTable"));
 		myAddr=routingTable->getRouterId();
 		ev << "GPSR: My (" << myAddr << ") position: (" << getXPos() << "," << getYPos() << ")" << endl;
+
+        IRoutingTable* dstRoutingTable=check_and_cast<IRoutingTable*>(getParentModule()->getParentModule()->getModuleByRelativePath("fixhost[12]")->getSubmodule("routingTable"));
+        dstAddr = dstRoutingTable->getRouterId();
+
 		// Broadcast position information to neighbors:
 		GpsrNeighborInfo* bni=new GpsrNeighborInfo();
 		bni->setRouterAddress(myAddr);
 		bni->setRouterXPos(getXPos()); //record the current position
 		bni->setRouterYPos(getYPos());
 		doLocalBroadcast(bni);
+#ifndef BEACONING;//update neighborhood
         cMessage *beaconing = new cMessage("beaconing");
         scheduleAt(0.85, beaconing);
+#endif
 	}
 }
 
@@ -104,7 +111,7 @@ void GPSR::handleMessage(cMessage *msg) //class SIM_API cPacket : public cMessag
 		nh_t::const_iterator it=neighborhood.find(neighborAddr);//      typedef std::tr1::unordered_map<IPv4Address,GpsrNeighborInfo*,hashIPv4Address> nh_t;
 
 		// Entry exists (the first condition below shows that the iterator (it) doesn't point to map::end), no update:
-		if(it!=neighborhood.end() && equal(*(*it).second,*bni))
+		if(it!=neighborhood.end() && equal(*(*it).second, *bni))
 		{
 			ev << "GPSR: Entry already exists, discarding" << endl;
 			delete bni;
@@ -394,7 +401,24 @@ bool GPSR::getDestAddress(cPacket*, Uint128&)
 	return false;
 }
 
-//void GPSR::finish()
-//{
-//    // This function is called by OMNeT++ at the end of the simulation.
-//}
+void GPSR::finish()
+{
+    // This function is called by OMNeT++ at the end of the simulation.
+    if (myAddr.getDByte(3) == dstAddr.getDByte(3))
+        {
+        double pathLength = par("pathLength");
+        std::string resultFileName = par("resultFileName");
+        resultFileName+= "_pathLength.csv";
+        const char * resultFileNamechar = resultFileName.c_str();
+
+        std::ofstream fileio;
+        fileio.open (resultFileNamechar, std::ios::app);
+        if (fileio.is_open())
+            {
+            fileio << "pathLength: " << ";" << pathLength << "\n";
+            fileio.flush();
+            fileio.close();
+            fileio <<std::endl;
+            }
+        }
+}

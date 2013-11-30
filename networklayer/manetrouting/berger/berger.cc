@@ -15,7 +15,7 @@
 #include "BergerRouteRequest_m.h"
 #include "BergerTestPkt_m.h"
 #include <math.h>       /* log2 */
-
+#define TRACE_PATH_VIA_TTL
 
 Define_Module(BERGER);
 
@@ -23,7 +23,7 @@ BERGER::posTable_t BERGER::posTable;
 Coord srcPos;
 Coord dstPos;
 IPv4Address srcAddr, dstAddr;
-double lambda=1.0e-2;
+double lambda=1.0e-4;
 double transmitterPower=6e-4;
 double thermalNoise=-110; //-110dbm, conversion to w is done in function calculateLocalLinkQuality()
 double pathLossAlpha=2;
@@ -38,10 +38,10 @@ void BERGER::initialize(int stage)
 	{
 		registerRoutingModule();
 		registerPosition(); // We register for position information, but unfortunately we will not get up-to-date information before the first update :(
-
 		Radio * myRadio=check_and_cast<Radio*>(getParentModule()->getModuleByRelativePath(".wlan[0].radio"));
 //
-        lambda = cSimulation::getActiveSimulation()->getSystemModule()->par("lambda").doubleValue();
+//        lambda = cSimulation::getActiveSimulation()->getSystemModule()->par("lambda").doubleValue();
+
 //        transmitterPower = cSimulation::getActiveSimulation()->getSystemModule()->getModuleByRelativePath("wlan[0].radio")->par("transmitterPower");
 //        thermalNoise = cSimulation::getActiveSimulation()->getSystemModule()->getModuleByRelativePath("wlan[0].radio")->par("thermalNoise");
 //        pathLossAlpha = cSimulation::getActiveSimulation()->getSystemModule()->getModuleByRelativePath("wlan[0].radio")->par("pathLossAlpha").doubleValue();
@@ -50,6 +50,7 @@ void BERGER::initialize(int stage)
 		// Determine position and IP:
 		routingTable=check_and_cast<IRoutingTable*>(getParentModule()->getSubmodule("routingTable"));
 		myAddr=routingTable->getRouterId();
+//        par("IPstring").setStringValue(myAddr.str());
 		// Broadcast position information to neighbors:
 
         BergerNeighborInfo* bni=new BergerNeighborInfo();
@@ -235,10 +236,25 @@ void BERGER::handleMessage(cMessage *msg)
 			rreq->setDstPos(Coord(posTable[dst].x,posTable[dst].y));
 			std::cout << "BERGER: " << myAddr << ": sending rreq (" << rreq->getSrc().getDByte(3) << "," << rreq->getDst().getDByte(3) << ") at " << simTime() << " because of MANET_ROUTE_NOROUTE" << "!" << endl;
 			doGlobalBroadcast(rreq);
+	        delete control;
+	        return;
 		}
-		delete control;
-		return;
+
+#ifdef TRACE_PATH_VIA_TTL
+        if(control->getOptionCode()== MANET_ROUTE_UPDATE && myAddr == dstAddr && dynamic_cast<IPv4Datagram*>(control->decapsulate()))
+        {
+            IPv4Datagram *datagram = dynamic_cast<IPv4Datagram*>(control->decapsulate());
+            int ttl = datagram->getTimeToLive();
+            datagram->removeControlInfo();
+            delete control;
+            return;
+        }
+#endif
+
+        return;
 	}
+
+
 
 	/*
 	 * NOTE: if sdpair contains more than one s-d, do this, if multiple, codes need modification
@@ -356,10 +372,10 @@ void BERGER::handleMessage(cMessage *msg)
         delete testPkt;
         return;
         }
-
-
-
 }
+
+
+
 
 void BERGER::positionUpdated(double x, double y)
 {
@@ -674,17 +690,6 @@ void BERGER::updateRoute(const IPv4Address& src, const IPv4Address& a, const IPv
 
 void BERGER::finish()
     {
-//    int sumHopNum=0;
-//    int averageHopNum =0;
-//    if(lsit_numberHops.size())
-//        {
-//        for(Record_numHops::iterator it = lsit_numberHops.begin(); it != lsit_numberHops.end(); it++ )
-//            {
-//            sumHopNum += *it;
-//            }
-//        averageHopNum = sumHopNum/lsit_numberHops.size();
-//        }
-
     std::string resultFileName = par("resultFileName");
     std::string resultFileName1=resultFileName + "_hops.csv";
     const char * resultFileNamechar1 = resultFileName1.c_str();
@@ -695,9 +700,10 @@ void BERGER::finish()
       if (fileio.is_open())
           {
 //          fileio << myAddr << ";" << state.first << ";" << state.second << ";" << gw1.getDByte(3) <<  ";" << gw2.getDByte(3) << "\n";
+
           if (myAddr.getDByte(3) == dstAddr.getDByte(3))
               {
-              fileio << "Generated_path: " << ";" << pathHops << ";" << "," << pathRoute << "\n";
+              fileio << "Generated_path: " << ";" << pathHops << ";" << pathRoute << "\n";
               }
           fileio.flush();
           fileio.close();
@@ -717,6 +723,21 @@ void BERGER::finish()
           fileio <<std::endl;
           }
 
+      if (myAddr.getDByte(3) == dstAddr.getDByte(3))
+          {
+          double pathLength = par("pathLength");
+          std::string resultFileName1 = resultFileName + "_pathLength.csv";
+          const char * resultFileNamechar =resultFileName1.c_str();
+
+          fileio.open (resultFileNamechar, std::ios::app);
+          if (fileio.is_open())
+              {
+              fileio << "pathLength: " << ";" << pathLength << "\n";
+              fileio.flush();
+              fileio.close();
+              fileio <<std::endl;
+              }
+          }
       std::cout<< myAddr.getDByte(3) <<" closes output file!!!!" << "\n";
     }
 

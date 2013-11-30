@@ -17,6 +17,7 @@
 #include <fstream>
 #include <utility>      // std::pair, std::get
 
+
 class BERGER : public ManetRoutingBase
 {
 	int numInitStages() const  {return 5;}

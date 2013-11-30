@@ -36,7 +36,6 @@ int DSRUU::lifo_token;
 
 Define_Module(DSRUU);
 
-
 struct iphdr *DSRUU::dsr_build_ip(struct dsr_pkt *dp, struct in_addr src,
                                   struct in_addr dst, int ip_len, int tot_len,
                                   int protocol, int ttl)
@@ -323,6 +322,12 @@ void DSRUU::initialize(int stage)
 
     if (stage==4)
     {
+        routingTable=check_and_cast<IRoutingTable*>(getParentModule()->getSubmodule("routingTable"));
+        myAddr=routingTable->getRouterId();
+
+        IRoutingTable* dstRoutingTable=check_and_cast<IRoutingTable*>(getParentModule()->getParentModule()->getModuleByRelativePath("fixhost[12]")->getSubmodule("routingTable"));
+        dstAddr = dstRoutingTable->getRouterId();
+
         /* Search the 80211 interface */
         inet_rt = RoutingTableAccess().get();
         inet_ift = InterfaceTableAccess().get();
@@ -411,6 +416,23 @@ void DSRUU::finish()
     send_buf_cleanup();
     maint_buf_cleanup();
 
+    if (myAddr.getDByte(3) == dstAddr.getDByte(3))
+        {
+        double pathLength = par("pathLength");
+        std::string resultFileName = par("resultFileName");
+        resultFileName+= "_pathLength.csv";
+        const char * resultFileNamechar = resultFileName.c_str();
+
+        std::ofstream fileio;
+        fileio.open (resultFileNamechar, std::ios::app);
+        if (fileio.is_open())
+            {
+            fileio << "pathLength: " << ";" << pathLength << "\n";
+            fileio.flush();
+            fileio.close();
+            fileio <<std::endl;
+            }
+        }
 }
 
 DSRUU::DSRUU():cSimpleModule(), INotifiable()

@@ -47,6 +47,7 @@ typedef std::vector<IPv4Address> IPAddressVector;
 
 Define_Module(AODVUU);
 
+
 /* Constructor for the AODVUU routing agent */
 
 bool AODVUU::log_file_fd_init=false;
@@ -76,6 +77,12 @@ void NS_CLASS initialize(int stage)
      */
     if (stage==4)
     {
+        routingTable=check_and_cast<IRoutingTable*>(getParentModule()->getSubmodule("routingTable"));
+        myAddr=routingTable->getRouterId();
+
+        IRoutingTable* dstRoutingTable=check_and_cast<IRoutingTable*>(getParentModule()->getParentModule()->getModuleByRelativePath("fixhost[12]")->getSubmodule("routingTable"));
+        dstAddr = dstRoutingTable->getRouterId();
+
 #ifndef AODV_GLOBAL_STATISTISTIC
         iswrite = false;
         totalSend=0;
@@ -1033,6 +1040,24 @@ void NS_CLASS processLinkBreak(const cPolymorphic *details)
 
 void NS_CLASS finish()
 {
+    if (myAddr.getDByte(3) == dstAddr.getDByte(3))
+        {
+        double pathLength = par("pathLength");
+        std::string resultFileName = par("resultFileName");
+        resultFileName+= "_pathLength.csv";
+        const char * resultFileNamechar = resultFileName.c_str();
+
+        std::ofstream fileio;
+        fileio.open (resultFileNamechar, std::ios::app);
+        if (fileio.is_open())
+            {
+            fileio << "pathLength: " << ";" << pathLength << "\n";
+            fileio.flush();
+            fileio.close();
+            fileio <<std::endl;
+            }
+        }
+
 
     simtime_t t = simTime();
     if (t==0)
