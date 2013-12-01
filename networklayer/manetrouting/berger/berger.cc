@@ -613,7 +613,7 @@ BERGER::pair_t BERGER::calculateLocalLinkQuality(const BergerNodeInfo& src, cons
         double ADV=srcC.distance(bC);
         double realADV = ADV*tan(angle1);
 
-        r= delay*realADV;
+        r= delay/realADV;
 
         std::cout << "BERGER: Node " << myAddr.getDByte(3) << "'s utility= " << r << endl;
         twoValues.first = delay;
@@ -633,7 +633,7 @@ BERGER::pair_t BERGER::calculateLocalLinkQuality(const BergerNodeInfo& src, cons
         double ADV=dstC.distance(aC);
         double realADV = ADV*tan(angle2);
 
-        r= delay*realADV;
+        r= delay/realADV;
 
         std::cout << "BERGER: Node " << myAddr.getDByte(3) << "'s utility= " << r << endl;
         twoValues.first = delay;
@@ -673,7 +673,7 @@ BERGER::pair_t BERGER::calculateLocalLinkQuality(const BergerNodeInfo& src, cons
         double angle2 = Vector2D<double>::angle(p4-p1, p5-p1);
         double realCounterADV = counterADV * tan(angle2);
 
-        r = delay*(realADV + realCounterADV);
+        r = delay/(realADV + realCounterADV);
 
         if(a.gw2 == self.gw1)
             {
@@ -690,8 +690,6 @@ BERGER::pair_t BERGER::calculateLocalLinkQuality(const BergerNodeInfo& src, cons
 
         return twoValues;
         }
-
-
 }
 
 
