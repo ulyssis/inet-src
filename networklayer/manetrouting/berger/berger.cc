@@ -601,19 +601,46 @@ BERGER::pair_t BERGER::calculateLocalLinkQuality(const BergerNodeInfo& src, cons
     pair_t twoValues;
 
     thermalNoise = pow(10,     thermalNoise/10)/1000;
-    if (self.ip == src.ip || self.ip == dst.ip)
+    if (self.ip == src.ip )
         {
-        double snr = transmitterPower * pow(aC.distance(selfC), (-pathLossAlpha))/pow(thermalNoise,2);
+        double snr = transmitterPower * pow(selfC.distance(bC), (-pathLossAlpha))/pow(thermalNoise,2);
         delay = messageLength / (bandwidth* log2(1+snr));
-        double wayToGo = (self.ip == src.ip)?aC.distance(dstC):aC.distance(srcC);//distance to dst
-        r= delay*wayToGo;
-        r-= lambda;
+
+        Vector2D<double> p1(src.x,src.y);
+        Vector2D<double> p2(b.x,b.y);
+        Vector2D<double> p3(dst.x,dst.y);
+        double angle1 = Vector2D<double>::angle(p2-p1, p3-p1);
+        double ADV=srcC.distance(bC);
+        double realADV = ADV*tan(angle1);
+
+        r= delay*realADV;
+
         std::cout << "BERGER: Node " << myAddr.getDByte(3) << "'s utility= " << r << endl;
         twoValues.first = delay;
         twoValues.second = r;
         return twoValues;
         }
-    else
+
+    if (self.ip == dst.ip)
+        {
+        double snr = transmitterPower * pow(dstC.distance(aC), (-pathLossAlpha))/pow(thermalNoise,2);
+        delay = messageLength / (bandwidth* log2(1+snr));
+
+        Vector2D<double> p11(dst.x,dst.y);
+        Vector2D<double> p22(a.x,a.y);
+        Vector2D<double> p33(src.x,src.y);
+        double angle2 = Vector2D<double>::angle(p22-p11, p33-p11);
+        double ADV=dstC.distance(aC);
+        double realADV = ADV*tan(angle2);
+
+        r= delay*realADV;
+
+        std::cout << "BERGER: Node " << myAddr.getDByte(3) << "'s utility= " << r << endl;
+        twoValues.first = delay;
+        twoValues.second = r;
+        return twoValues;
+        }
+    if(self.ip != src.ip && self.ip != dst.ip)
         {
         /*double transmitterPower;
         double thermalNoise;
