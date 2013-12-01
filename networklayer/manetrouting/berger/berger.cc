@@ -15,6 +15,8 @@
 #include "BergerRouteRequest_m.h"
 #include "BergerTestPkt_m.h"
 #include <math.h>       /* log2 */
+#include <stdio.h>
+#include "Vector2D.h"
 #define TRACE_PATH_VIA_TTL
 
 Define_Module(BERGER);
@@ -626,14 +628,25 @@ BERGER::pair_t BERGER::calculateLocalLinkQuality(const BergerNodeInfo& src, cons
          *  C is capacity, C is measured in bits per second if the logarithm is taken in base 2, B is packet size (messageLength)
          *  W is bandwidth
          */
+
         double snr1 = transmitterPower * pow(aC.distance(selfC), (-pathLossAlpha))/pow(thermalNoise,2);
         double snr2 = transmitterPower * pow(bC.distance(selfC), (-pathLossAlpha))/pow(thermalNoise,2);
         delay = messageLength / (bandwidth* log2((1+snr1)*(1+snr2)));
 
-        double wayToGo = aC.distance(srcC);
-        double wayGone = bC.distance(dstC);
+        double ADV=selfC.distance(bC);
+        Vector2D<double> p1(self.x,self.y);
+        Vector2D<double> p2(b.x,b.y);
+        Vector2D<double> p3(dst.x,dst.y);
+        double angle1 = Vector2D<double>::angle(p2-p1, p3-p1);
+        double realADV = ADV * tan(angle1);
 
-        r = delay*(wayToGo + wayGone);
+        Vector2D<double> p4(a.x,a.y);
+        Vector2D<double> p5(src.x,src.y);
+        double counterADV =selfC.distance(aC);
+        double angle2 = Vector2D<double>::angle(p4-p1, p5-p1);
+        double realCounterADV = counterADV * tan(angle2);
+
+        r = delay*(realADV + realCounterADV);
 
         if(a.gw2 == self.gw1)
             {
@@ -653,6 +666,7 @@ BERGER::pair_t BERGER::calculateLocalLinkQuality(const BergerNodeInfo& src, cons
 
 
 }
+
 
 void BERGER::updateRoute(const IPv4Address& src, const IPv4Address& a, const IPv4Address& b, const IPv4Address& dst, double quality)
 {

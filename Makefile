@@ -4531,6 +4531,7 @@ $O/networklayer/manetrouting/berger/berger.o: networklayer/manetrouting/berger/b
 	networklayer/manetrouting/berger/BergerNeighborInfo_m.h \
 	networklayer/manetrouting/berger/BergerRouteRequest_m.h \
 	networklayer/manetrouting/berger/BergerTestPkt_m.h \
+	networklayer/manetrouting/berger/Vector2D.h \
 	networklayer/manetrouting/berger/berger.h \
 	networklayer/manetrouting/berger/mode.h \
 	util/FWMath.h \
