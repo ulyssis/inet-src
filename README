@@ -1,2 +1,4 @@
 The rotuing strategies are in networklayer/manetrouting, BERGER is our implementation.
+OMNeT++ should be installed to run the routing schemes.
+OMNeT++ (https://omnetpp.org/) is OMNeT++ is an extensible, modular, component-based C++ simulation library and framework, primarily for building network simulators.
 
