@@ -1,4 +1,5 @@
 The BERGER routing scheme is in networklayer/manetrouting. 
+My implementation is based on inet (v 2.1.0), omentpp 4.2 is needed to pre-installed
 
 OMNeT++ should be installed to run the routing schemes.
 OMNeT++ (https://omnetpp.org/) is OMNeT++ is an extensible, modular, component-based C++ simulation library and framework, primarily for building network simulators.
